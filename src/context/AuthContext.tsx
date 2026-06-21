@@ -30,11 +30,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
       return
     }
+    // Verify token validity then fetch full user profile (verify only returns JWT payload, no email/name)
     fetch(`${AUTH_URL}/api/auth/verify`, {
       headers: { Authorization: `Bearer ${token}` },
     })
+      .then((r) => (r.ok ? fetch(`${AUTH_URL}/api/users/me`, { headers: { Authorization: `Bearer ${token}` } }) : Promise.reject()))
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data) => setUser(data.user))
+      .then((data) => {
+        const u = data.user ?? data
+        setUser({
+          userId: u.id ?? u.userId,
+          email: u.email,
+          name: u.name,
+          role: u.role,
+          tenantId: u.tenantId ?? '',
+        })
+      })
       .catch(() => {
         localStorage.removeItem('ift_token')
         setToken(null)
@@ -55,7 +66,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data = await res.json()
     localStorage.setItem('ift_token', data.token)
     setToken(data.token)
-    setUser(data.user)
+    // login returns { id, email, name, role }; normalize to AuthUser shape
+    const u = data.user
+    setUser({
+      userId: u.userId ?? u.id,
+      email: u.email,
+      name: u.name,
+      role: u.role,
+      tenantId: u.tenantId ?? '',
+    })
   }
 
   const logout = () => {
