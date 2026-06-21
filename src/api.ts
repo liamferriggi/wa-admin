@@ -1,17 +1,26 @@
 import type { Agent, Conversation, ApiKey } from './types'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'https://wa.infinite-fusion.com'
-const API_KEY = import.meta.env.VITE_API_KEY || ''
+
+function getToken(): string | null {
+  return localStorage.getItem('ift_token')
+}
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = getToken()
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
   })
+  if (res.status === 401) {
+    localStorage.removeItem('ift_token')
+    window.location.href = '/login'
+    throw new Error('Session expired — please sign in again')
+  }
   if (!res.ok) {
     const text = await res.text()
     throw new Error(`${res.status} ${res.statusText}: ${text}`)

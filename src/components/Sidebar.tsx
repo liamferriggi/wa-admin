@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Bot, MessageSquare, Key } from 'lucide-react'
+import { LayoutDashboard, Bot, MessageSquare, Key, LogOut } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -11,7 +12,12 @@ const NAV = [
 const NAVY = '#0B0C2A'
 const BLUE = '#2B35FF'
 
+function initials(name: string) {
+  return name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
+}
+
 export default function Sidebar() {
+  const { user, logout } = useAuth()
   return (
     <aside
       style={{
@@ -109,16 +115,47 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Footer */}
-      <div
-        style={{
-          padding: '12px 16px',
-          borderTop: '1px solid rgba(255,255,255,0.1)',
-          fontSize: 11,
-          color: 'rgba(255,255,255,0.25)',
-        }}
-      >
-        wa.infinite-fusion.com
+      {/* User footer */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '10px 12px' }}>
+        {user ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div
+              style={{
+                width: 28, height: 28, borderRadius: '50%',
+                background: BLUE, color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 11, fontWeight: 700, flexShrink: 0,
+              }}
+            >
+              {initials(user.name)}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#fff', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {user.name}
+              </div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', lineHeight: 1.3 }}>
+                {user.role}
+              </div>
+            </div>
+            <button
+              onClick={logout}
+              title="Sign out"
+              style={{
+                background: 'none', border: 'none', padding: 4, cursor: 'pointer',
+                color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center',
+                borderRadius: 4, flexShrink: 0,
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = '#fff' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.4)' }}
+            >
+              <LogOut size={14} />
+            </button>
+          </div>
+        ) : (
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', padding: '4px 4px' }}>
+            Infinite Fusion
+          </div>
+        )}
       </div>
     </aside>
   )
