@@ -48,10 +48,10 @@ export default function Dashboard() {
       {error && <div className="error-banner">{error}</div>}
 
       <div className="stats-grid">
-        <StatCard label="Total Agents" value={stats.totalAgents} accent="#6366f1" />
-        <StatCard label="Active Conversations" value={stats.activeConversations} accent="#3b82f6" />
-        <StatCard label="Pending Review" value={stats.pendingRequests} accent="#f59e0b" />
-        <StatCard label="Approved Today" value={stats.approvedToday} accent="#10b981" />
+        <StatCard label="Total Agents" value={stats.totalAgents} accent="#2B35FF" />
+        <StatCard label="Active Conversations" value={stats.activeConversations} accent="#2B35FF" />
+        <StatCard label="Pending Review" value={stats.pendingRequests} accent="#D97706" />
+        <StatCard label="Approved Today" value={stats.approvedToday} accent="#059669" />
       </div>
 
       <div className="card">

@@ -1,11 +1,15 @@
 import { NavLink } from 'react-router-dom'
+import { LayoutDashboard, Bot, MessageSquare, Key } from 'lucide-react'
 
 const NAV = [
-  { to: '/', label: 'Dashboard', icon: '⬛' },
-  { to: '/agents', label: 'Agents', icon: '🤖' },
-  { to: '/conversations', label: 'Conversations', icon: '💬' },
-  { to: '/api-keys', label: 'API Keys', icon: '🔑' },
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/agents', label: 'Agents', icon: Bot },
+  { to: '/conversations', label: 'Conversations', icon: MessageSquare },
+  { to: '/api-keys', label: 'API Keys', icon: Key },
 ]
+
+const NAVY = '#0B0C2A'
+const BLUE = '#2B35FF'
 
 export default function Sidebar() {
   return (
@@ -13,19 +17,18 @@ export default function Sidebar() {
       style={{
         width: 'var(--sidebar-width)',
         minWidth: 'var(--sidebar-width)',
-        background: 'var(--surface)',
-        borderRight: '1px solid var(--border)',
+        background: NAVY,
+        borderRight: '1px solid rgba(255,255,255,0.08)',
         display: 'flex',
         flexDirection: 'column',
-        padding: '0',
         height: '100%',
       }}
     >
       {/* Logo */}
       <div
         style={{
-          padding: '20px 16px 16px',
-          borderBottom: '1px solid var(--border)',
+          padding: '16px',
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
           display: 'flex',
           alignItems: 'center',
           gap: 10,
@@ -33,27 +36,35 @@ export default function Sidebar() {
       >
         <div
           style={{
-            width: 32,
-            height: 32,
-            background: 'var(--accent)',
+            width: 36,
+            height: 36,
+            background: '#fff',
             borderRadius: 8,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 16,
+            padding: 3,
             flexShrink: 0,
           }}
         >
-          ✉
+          <img
+            src="/brand/logo-stacked.png"
+            alt="Infinite Fusion"
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+          />
         </div>
         <div>
-          <div style={{ fontWeight: 700, fontSize: 14 }}>WA Admin</div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>WhatsApp Agents</div>
+          <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', lineHeight: 1.2 }}>
+            Wapilot
+          </div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.3 }}>
+            Infinite Fusion
+          </div>
         </div>
       </div>
 
       {/* Nav */}
-      <nav style={{ padding: '12px 8px', flex: 1 }}>
+      <nav style={{ padding: '10px 10px', flex: 1 }}>
         {NAV.map((item) => (
           <NavLink
             key={item.to}
@@ -64,17 +75,36 @@ export default function Sidebar() {
               alignItems: 'center',
               gap: 10,
               padding: '9px 12px',
-              borderRadius: 6,
+              borderRadius: 8,
               marginBottom: 2,
-              color: isActive ? '#fff' : 'var(--text-muted)',
-              background: isActive ? 'var(--accent)' : 'transparent',
+              color: isActive ? '#fff' : 'rgba(255,255,255,0.5)',
+              background: isActive ? BLUE : 'transparent',
               fontWeight: isActive ? 500 : 400,
-              fontSize: 14,
+              fontSize: 13,
               transition: 'all 0.15s',
+              textDecoration: 'none',
             })}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLAnchorElement
+              if (!el.getAttribute('aria-current')) {
+                el.style.color = '#fff'
+                el.style.background = 'rgba(255,255,255,0.06)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLAnchorElement
+              if (!el.getAttribute('aria-current')) {
+                el.style.color = 'rgba(255,255,255,0.5)'
+                el.style.background = 'transparent'
+              }
+            }}
           >
-            <span style={{ fontSize: 15 }}>{item.icon}</span>
-            {item.label}
+            {({ isActive }) => (
+              <>
+                <item.icon size={15} color={isActive ? '#fff' : 'rgba(255,255,255,0.5)'} />
+                <span>{item.label}</span>
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
@@ -83,9 +113,9 @@ export default function Sidebar() {
       <div
         style={{
           padding: '12px 16px',
-          borderTop: '1px solid var(--border)',
+          borderTop: '1px solid rgba(255,255,255,0.1)',
           fontSize: 11,
-          color: 'var(--text-muted)',
+          color: 'rgba(255,255,255,0.25)',
         }}
       >
         wa.infinite-fusion.com

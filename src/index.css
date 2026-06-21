@@ -5,40 +5,57 @@
 }
 
 :root {
-  --bg: #0f1117;
-  --surface: #1a1d27;
-  --surface2: #22263a;
-  --border: #2e3248;
-  --text: #e2e8f0;
-  --text-muted: #8892a4;
-  --accent: #6366f1;
-  --accent-hover: #4f46e5;
-  --green: #10b981;
-  --yellow: #f59e0b;
-  --blue: #3b82f6;
-  --purple: #8b5cf6;
-  --red: #ef4444;
-  --grey: #6b7280;
+  /* Infinite Fusion brand */
+  --navy:        #0B0C2A;
+  --blue:        #2B35FF;
+  --blue-light:  #EEF0FF;
+  --blue-mid:    #C5C9FF;
+
+  /* Surface / layout */
+  --bg:          #F5F6FA;
+  --surface:     #FFFFFF;
+  --surface2:    #F5F6FA;
+  --border:      #E4E6EF;
+
+  /* Typography */
+  --text:        #0B0C2A;
+  --text-muted:  #6B7280;
+  --accent:      #2B35FF;
+  --accent-hover: #1a23e0;
+
+  /* Status */
+  --green:  #059669;
+  --yellow: #D97706;
+  --red:    #DC2626;
+  --grey:   #6B7280;
+
   --radius: 8px;
-  --sidebar-width: 220px;
+  --sidebar-width: 228px;
 }
 
 html, body, #root {
   height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: "Segoe UI", system-ui, sans-serif;
   font-size: 14px;
   background: var(--bg);
   color: var(--text);
   line-height: 1.5;
 }
 
+/* Thin branded scrollbars */
+::-webkit-scrollbar          { width: 6px; height: 6px; }
+::-webkit-scrollbar-track    { background: transparent; }
+::-webkit-scrollbar-thumb    { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--blue-mid); }
+
 a { color: inherit; text-decoration: none; }
 button { cursor: pointer; font-family: inherit; font-size: inherit; }
+
 input, textarea, select {
   font-family: inherit;
   font-size: inherit;
   color: var(--text);
-  background: var(--surface2);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 8px 12px;
@@ -48,6 +65,7 @@ input, textarea, select {
 }
 input:focus, textarea:focus, select:focus {
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(43,53,255,0.08);
 }
 textarea { resize: vertical; }
 
@@ -60,6 +78,7 @@ textarea { resize: vertical; }
   flex: 1;
   overflow-y: auto;
   padding: 32px;
+  background: var(--bg);
 }
 
 .page-header {
@@ -71,8 +90,8 @@ textarea { resize: vertical; }
 
 .page-title {
   font-size: 22px;
-  font-weight: 600;
-  color: var(--text);
+  font-weight: 700;
+  color: var(--navy);
 }
 
 .page-subtitle {
@@ -87,6 +106,7 @@ textarea { resize: vertical; }
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 20px;
+  box-shadow: 0 1px 3px rgba(11,12,42,0.04);
 }
 
 .stats-grid {
@@ -101,6 +121,7 @@ textarea { resize: vertical; }
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 20px;
+  box-shadow: 0 1px 3px rgba(11,12,42,0.04);
 }
 
 .stat-label {
@@ -114,7 +135,7 @@ textarea { resize: vertical; }
 .stat-value {
   font-size: 28px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--navy);
 }
 
 /* Table */
@@ -135,6 +156,7 @@ th {
   letter-spacing: 0.06em;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border);
+  background: var(--bg);
 }
 
 td {
@@ -144,7 +166,7 @@ td {
 }
 
 tr:last-child td { border-bottom: none; }
-tr:hover td { background: var(--surface2); }
+tr:hover td { background: #F8F8FD; }
 
 /* Buttons */
 .btn {
@@ -159,7 +181,7 @@ tr:hover td { background: var(--surface2); }
 }
 
 .btn-primary {
-  background: var(--accent);
+  background: var(--blue);
   color: #fff;
 }
 .btn-primary:hover { background: var(--accent-hover); }
@@ -169,14 +191,14 @@ tr:hover td { background: var(--surface2); }
   color: var(--text-muted);
   border: 1px solid var(--border);
 }
-.btn-ghost:hover { color: var(--text); border-color: var(--text-muted); }
+.btn-ghost:hover { color: var(--text); border-color: var(--blue-mid); background: var(--blue-light); }
 
 .btn-danger {
   background: transparent;
   color: var(--red);
   border: 1px solid transparent;
 }
-.btn-danger:hover { background: rgba(239,68,68,0.1); }
+.btn-danger:hover { background: rgba(220,38,38,0.08); }
 
 .btn-sm {
   padding: 5px 10px;
@@ -187,7 +209,7 @@ tr:hover td { background: var(--surface2); }
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(11,12,42,0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -204,12 +226,14 @@ tr:hover td { background: var(--surface2); }
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(11,12,42,0.15);
 }
 
 .modal-title {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 20px;
+  color: var(--navy);
 }
 
 .modal-footer {
@@ -227,7 +251,7 @@ tr:hover td { background: var(--surface2); }
 .form-label {
   display: block;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -266,7 +290,7 @@ tr:hover td { background: var(--surface2); }
   border-radius: 50%;
   transition: 0.2s;
 }
-.toggle input:checked + .toggle-slider { background: var(--accent); }
+.toggle input:checked + .toggle-slider { background: var(--blue); }
 .toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
 
 /* Error / empty states */
@@ -277,8 +301,8 @@ tr:hover td { background: var(--surface2); }
 }
 
 .error-banner {
-  background: rgba(239,68,68,0.1);
-  border: 1px solid rgba(239,68,68,0.3);
+  background: rgba(220,38,38,0.06);
+  border: 1px solid rgba(220,38,38,0.25);
   border-radius: var(--radius);
   padding: 12px 16px;
   color: var(--red);
@@ -297,13 +321,14 @@ tr:hover td { background: var(--surface2); }
 /* Tag chip */
 .chip {
   display: inline-block;
-  background: var(--surface2);
-  border: 1px solid var(--border);
+  background: var(--blue-light);
+  border: 1px solid var(--blue-mid);
   border-radius: 4px;
   padding: 2px 7px;
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--blue);
   margin: 2px;
+  font-weight: 500;
 }
 
 /* Filters row */
@@ -319,21 +344,12 @@ tr:hover td { background: var(--surface2); }
   min-width: 140px;
 }
 
-/* Copied flash */
-.copied-flash {
-  background: var(--green);
-  color: #fff;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-}
-
 /* Key preview */
 .key-preview {
   font-family: 'Courier New', monospace;
   font-size: 12px;
   color: var(--text-muted);
-  background: var(--surface2);
+  background: var(--bg);
   padding: 6px 10px;
   border-radius: 4px;
   border: 1px solid var(--border);
