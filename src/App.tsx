@@ -2,9 +2,12 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
+import InboxPage from './pages/Inbox'
+import TasksPage from './pages/Tasks'
 import Agents from './pages/Agents'
 import Conversations from './pages/Conversations'
 import ApiKeys from './pages/ApiKeys'
+import SettingsPage from './pages/Settings'
 import Login from './pages/Login'
 
 function ProtectedLayout() {
@@ -26,6 +29,9 @@ function ProtectedLayout() {
       <main className="main-content">
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/inbox" element={<InboxPage />} />
+          <Route path="/tasks" element={<TasksPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/agents" element={<Agents />} />
           <Route path="/conversations" element={<Conversations />} />
           <Route path="/conversations/:id" element={<Conversations />} />

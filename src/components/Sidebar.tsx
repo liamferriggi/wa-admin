@@ -1,12 +1,15 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Bot, MessageSquare, Key, LogOut } from 'lucide-react'
+import { LayoutDashboard, Inbox, CheckSquare, Bot, MessageSquare, Key, Settings, LogOut } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/inbox', label: 'Inbox', icon: Inbox },
+  { to: '/tasks', label: 'Tasks', icon: CheckSquare },
   { to: '/agents', label: 'Agents', icon: Bot },
   { to: '/conversations', label: 'Conversations', icon: MessageSquare },
   { to: '/api-keys', label: 'API Keys', icon: Key },
+  { to: '/settings', label: 'Settings', icon: Settings },
 ]
 
 const NAVY = '#0B0C2A'

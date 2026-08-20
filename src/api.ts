@@ -1,4 +1,4 @@
-import type { Agent, Conversation, ApiKey } from './types'
+import type { Agent, AgentTemplate, ChatState, Conversation, ApiKey, Note, Task, Webhook } from './types'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'https://wa.infinite-fusion.com'
 
@@ -51,6 +51,53 @@ export const approveRequest = (id: string) =>
   request<void>(`/api/requests/${id}/approve`, { method: 'POST' })
 export const rejectRequest = (id: string, reason?: string) =>
   request<void>(`/api/requests/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) })
+
+// Chats (chief-of-staff)
+export const getChats = (state?: string) =>
+  request<{ chats: ChatState[] }>(`/api/chats${state ? `?state=${state}` : ''}`).then((r) => r.chats)
+export const updateChat = (chatId: string, data: { state?: string; snoozedUntil?: string; assignee?: string }) =>
+  request<ChatState>(`/api/chats/${chatId}`, { method: 'PUT', body: JSON.stringify(data) })
+
+// Tasks
+export const getTasks = (params?: { status?: string; chatId?: string }) => {
+  const qs = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : ''
+  return request<{ tasks: Task[] }>(`/api/tasks${qs}`).then((r) => r.tasks)
+}
+export const createTask = (data: Partial<Task>) =>
+  request<Task>('/api/tasks', { method: 'POST', body: JSON.stringify(data) })
+export const updateTask = (id: string, data: Partial<Task>) =>
+  request<Task>(`/api/tasks/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+export const deleteTask = (id: string) =>
+  request<void>(`/api/tasks/${id}`, { method: 'DELETE' })
+
+// Notes
+export const getNotes = (chatId: string) =>
+  request<{ notes: Note[] }>(`/api/chats/${chatId}/notes`).then((r) => r.notes)
+export const createNote = (chatId: string, data: { author?: string; text: string }) =>
+  request<Note>(`/api/chats/${chatId}/notes`, { method: 'POST', body: JSON.stringify(data) })
+
+// Brief
+export const getBrief = () => request<{ brief: string }>('/api/brief').then((r) => r.brief)
+export const sendBrief = () => request<{ sent: boolean }>('/api/brief/send', { method: 'POST' })
+
+// Webhooks
+export const getWebhooks = () =>
+  request<{ webhooks: Webhook[] }>('/api/webhooks').then((r) => r.webhooks)
+export const createWebhook = (data: { url: string; events?: string[]; secret?: string }) =>
+  request<Webhook>('/api/webhooks', { method: 'POST', body: JSON.stringify(data) })
+export const deleteWebhook = (id: string) =>
+  request<void>(`/api/webhooks/${id}`, { method: 'DELETE' })
+
+// Waitlist
+export interface WaitlistEntry { id: string; email: string; name?: string; company?: string; createdAt: string }
+export const getWaitlist = () =>
+  request<{ waitlist: WaitlistEntry[] }>('/api/waitlist').then((r) => r.waitlist)
+
+// Agent templates
+export const getAgentTemplates = () =>
+  request<{ templates: AgentTemplate[] }>('/api/agent-templates').then((r) => r.templates)
+export const installAgentTemplate = (key: string) =>
+  request<Agent>(`/api/agent-templates/${key}/install`, { method: 'POST' })
 
 // API Keys
 export const getApiKeys = () =>
