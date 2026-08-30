@@ -159,19 +159,25 @@ function AgentBuilder({ initial, onClose, onSaved }: {
       <div className="card" style={{ marginBottom: 16, background: 'var(--blue-light, #EEF0FF)', borderColor: 'var(--blue-mid, #C5C9FF)' }}>
         <div style={{ fontWeight: 600, marginBottom: 6 }}>✨ Describe it and I'll set it up</div>
         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10 }}>
-          Write what you want this agent to do in your own words — it will fill in the job, workflow and fields below for you to refine.
+          Write one line, or paste a full specification — role, rules, examples, safety procedures, the lot.
+          Everything you write is carried into the fields below; anything that doesn't fit a field lands in
+          Additional instructions rather than being dropped.
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <input
-            value={idea}
-            onChange={(e) => setIdea(e.target.value)}
-            placeholder="e.g. Takes tile and paint orders from contractors, checks delivery date and site address"
-            style={{ flex: 1, minWidth: 260 }}
-            onKeyDown={(e) => { if (e.key === 'Enter') runDraft() }}
-          />
-          <button className="btn btn-primary" onClick={runDraft} disabled={drafting}>
-            {drafting ? 'Designing…' : 'Draft it'}
+        <textarea
+          rows={10}
+          value={idea}
+          onChange={(e) => setIdea(e.target.value)}
+          placeholder={'e.g. You are the Mythos Faults Agent, operating inside the Mythos staff WhatsApp group.\n\nYour purpose is to capture faults, damages and repair requests reported by staff, and turn them into actionable maintenance tasks.\n\nStaff may report faults in different ways — a photo with a short note, several photos, only a photo, only text, or a voice message…'}
+          style={{ width: '100%', fontFamily: 'inherit', lineHeight: 1.5 }}
+        />
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 10, flexWrap: 'wrap' }}>
+          <button className="btn btn-primary" onClick={runDraft} disabled={drafting || !idea.trim()}>
+            {drafting ? 'Designing your agent…' : 'Draft it'}
           </button>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+            {idea.trim() ? `${idea.trim().split(/\s+/).length} words` : 'Long specifications welcome'}
+            {drafting ? ' · this can take up to a minute for a long spec' : ''}
+          </span>
         </div>
       </div>
 
@@ -232,6 +238,15 @@ function AgentBuilder({ initial, onClose, onSaved }: {
               <textarea rows={2} value={a.escalationRule ?? ''} onChange={(e) => set({ escalationRule: e.target.value })}
                 placeholder="Anything over €5,000, hired machinery, or a complaint about an existing order." />
             </Field>
+          </Section>
+
+          <Section title="Additional instructions" hint="House rules, edge cases, worked examples — anything that doesn't belong in the fields above. Passed to the agent verbatim.">
+            <textarea
+              rows={8}
+              value={a.systemPrompt ?? ''}
+              onChange={(e) => set({ systemPrompt: e.target.value })}
+              placeholder={'If a staff member reports several unrelated faults in one message, treat them as separate faults.\nCombine messages that clearly refer to the same fault.\nNever guess the location — ask.'}
+            />
           </Section>
 
           <Section title="Settings">
