@@ -1,3 +1,6 @@
+export type AgentMode = 'ai' | 'form'
+export type AgentIntelligence = 'fast' | 'balanced' | 'smart'
+
 export interface Agent {
   id: string
   name: string
@@ -7,14 +10,32 @@ export interface Agent {
   fields?: FieldConfig[]
   active: boolean
   isDefault: boolean
+  mode: AgentMode
+  role: string
+  jobContext: string
+  workflow: string
+  knowledge: string
+  tone: string
+  completionCriteria: string
+  escalationRule: string
+  intelligence: AgentIntelligence
   createdAt: string
   updatedAt: string
 }
 
+export interface AgentTurn {
+  reply: string
+  collected: Record<string, unknown>
+  status: 'collecting' | 'ready_for_review' | 'done'
+  needsHuman: boolean
+  handoffReason?: string
+}
+
 export interface FieldConfig {
-  name: string
+  key: string
   label: string
-  type: 'text' | 'number' | 'email' | 'date' | 'select'
+  question: string
+  type: 'text' | 'number' | 'date' | 'select'
   required?: boolean
   options?: string[]
 }

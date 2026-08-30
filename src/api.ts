@@ -1,4 +1,4 @@
-import type { Agent, AgentTemplate, ChatState, Conversation, ApiKey, Note, Task, Webhook } from './types'
+import type { Agent, AgentTemplate, AgentTurn, ChatState, Conversation, ApiKey, Note, Task, Webhook } from './types'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'https://wa.infinite-fusion.com'
 
@@ -51,6 +51,17 @@ export const approveRequest = (id: string) =>
   request<void>(`/api/requests/${id}/approve`, { method: 'POST' })
 export const rejectRequest = (id: string, reason?: string) =>
   request<void>(`/api/requests/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) })
+
+// Agent builder
+export const testAgent = (id: string, body: {
+  message: string
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>
+  collected?: Record<string, unknown>
+  overrides?: Partial<Agent>
+}) => request<AgentTurn>(`/api/agents/${id}/test`, { method: 'POST', body: JSON.stringify(body) })
+
+export const draftAgent = (description: string) =>
+  request<Partial<Agent>>('/api/agents/draft', { method: 'POST', body: JSON.stringify({ description }) })
 
 // Chats (chief-of-staff)
 export const getChats = (state?: string) =>
