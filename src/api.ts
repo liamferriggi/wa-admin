@@ -25,6 +25,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const text = await res.text()
     throw new Error(`${res.status} ${res.statusText}: ${text}`)
   }
+  // A 204 has no body. Calling res.json() on it throws, which used to reject the
+  // delete call and skip the caller's refresh — the row vanished only on a manual
+  // reload, so deleting looked like it had done nothing.
+  if (res.status === 204 || res.headers.get('content-length') === '0') {
+    return undefined as T
+  }
   return res.json()
 }
 
@@ -45,6 +51,8 @@ export const getConversations = (params?: { agentId?: string; status?: string })
   return request<{ conversations: Conversation[] }>(`/api/conversations${qs}`).then((r) => r.conversations)
 }
 export const getConversation = (id: string) => request<Conversation>(`/api/conversations/${id}`)
+export const deleteConversation = (id: string) =>
+  request<void>(`/api/conversations/${id}`, { method: 'DELETE' })
 
 // Requests (approve/reject)
 export const approveRequest = (id: string) =>

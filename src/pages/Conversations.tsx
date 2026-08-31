@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { getConversations, getConversation, approveRequest, rejectRequest } from '../api'
+import { getConversations, getConversation, approveRequest, rejectRequest, deleteConversation } from '../api'
 import type { Conversation, ConversationStatus } from '../types'
 import StatusBadge from '../components/StatusBadge'
+import ConfirmDialog from '../components/ConfirmDialog'
+import Toast from '../components/Toast'
 
 const STATUSES: ConversationStatus[] = [
   'collecting',
@@ -24,6 +26,9 @@ function ConversationList() {
   const [error, setError] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState('')
   const [agentFilter, setAgentFilter] = useState('')
+  const [pendingDelete, setPendingDelete] = useState<Conversation | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
 
   const load = () => {
     setLoading(true)
@@ -39,6 +44,22 @@ function ConversationList() {
   useEffect(() => { load() }, [statusFilter, agentFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const agentIds = [...new Set(conversations.map((c) => c.agentId))]
+
+  const confirmRemove = async () => {
+    if (!pendingDelete) return
+    setDeleting(true)
+    try {
+      await deleteConversation(pendingDelete.id)
+      setConversations((prev) => prev.filter((x) => x.id !== pendingDelete.id))
+      setToast(`${pendingDelete.id} deleted`)
+      setPendingDelete(null)
+    } catch (e) {
+      setError((e as Error).message)
+      setPendingDelete(null)
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   if (loading) return <div className="loading">Loading...</div>
 
@@ -111,6 +132,14 @@ function ConversationList() {
                       >
                         View
                       </Link>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => setPendingDelete(c)}
+                        title="Delete conversation"
+                        style={{ marginLeft: 4 }}
+                      >
+                        🗑
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -119,6 +148,18 @@ function ConversationList() {
           </div>
         )}
       </div>
+
+      {pendingDelete && (
+        <ConfirmDialog
+          title="Delete this conversation?"
+          body={`${pendingDelete.id} with ${pendingDelete.phoneNumber}, its messages and its photo records will be removed. This cannot be undone. Any task already filed in FusionTask stays there, and the photos it links to keep working.`}
+          busy={deleting}
+          onConfirm={confirmRemove}
+          onCancel={() => setPendingDelete(null)}
+        />
+      )}
+
+      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
     </div>
   )
 }

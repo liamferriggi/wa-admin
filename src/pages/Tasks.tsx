@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { getTasks, createTask, updateTask, deleteTask } from '../api'
 import type { Task } from '../types'
+import ConfirmDialog from '../components/ConfirmDialog'
+import Toast from '../components/Toast'
 
 const TYPE_ICON: Record<Task['type'], string> = {
   task: '✅', order: '📦', promise: '🤝', appointment: '📅', followup: '🔔',
@@ -13,6 +15,9 @@ export default function TasksPage() {
   const [showDone, setShowDone] = useState(false)
   const [title, setTitle] = useState('')
   const [due, setDue] = useState('')
+  const [pendingDelete, setPendingDelete] = useState<Task | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
 
   const load = () => getTasks().then(setTasks).catch((e) => setError(e.message)).finally(() => setLoading(false))
   useEffect(() => { load() }, [])
@@ -25,7 +30,24 @@ export default function TasksPage() {
   }
 
   const complete = async (t: Task) => { await updateTask(t.id, { status: t.status === 'open' ? 'done' : 'open' }); load() }
-  const remove = async (t: Task) => { await deleteTask(t.id); load() }
+
+  const confirmRemove = async () => {
+    if (!pendingDelete) return
+    setDeleting(true)
+    try {
+      await deleteTask(pendingDelete.id)
+      // Drop it from view immediately rather than waiting on a refetch, so the
+      // result of the click is never in doubt.
+      setTasks((prev) => prev.filter((x) => x.id !== pendingDelete.id))
+      setToast('Task deleted')
+      setPendingDelete(null)
+    } catch (e) {
+      setError((e as Error).message)
+      setPendingDelete(null)
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   const visible = tasks.filter((t) => showDone ? true : t.status === 'open')
   const today = new Date().toISOString().slice(0, 10)
@@ -77,11 +99,23 @@ export default function TasksPage() {
                   color: overdue ? '#A33B2E' : '#2B35FF', background: overdue ? '#F6E4E0' : '#EEF0FF',
                 }}>{overdue ? '⚠ ' : ''}{t.dueDate}</span>
               )}
-              <button className="btn" onClick={() => remove(t)} title="Delete">🗑</button>
+              <button className="btn" onClick={() => setPendingDelete(t)} title="Delete task">🗑</button>
             </div>
           )
         })}
       </div>
+
+      {pendingDelete && (
+        <ConfirmDialog
+          title="Delete this task?"
+          body={`"${pendingDelete.title}" will be removed from Wapilot. This cannot be undone. Anything already filed in FusionTask stays there.`}
+          busy={deleting}
+          onConfirm={confirmRemove}
+          onCancel={() => setPendingDelete(null)}
+        />
+      )}
+
+      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
     </div>
   )
 }

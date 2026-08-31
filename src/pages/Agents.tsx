@@ -106,6 +106,20 @@ function Pill({ text, color, bg }: { text: string; color: string; bg: string }) 
 
 // ── Builder ───────────────────────────────────────────────────────────────────
 
+// Rebuilt as a guided flow. Everything here was previously one page of nine
+// stacked cards using words like "system prompt" and "intelligence" — fine if you
+// already knew the model underneath, unusable if you are a manager setting up an
+// agent for your team. Same fields, four plain steps, one decision at a time.
+
+type StepId = 'describe' | 'basics' | 'capture' | 'launch'
+
+const STEPS: Array<{ id: StepId; label: string; blurb: string }> = [
+  { id: 'describe', label: 'Describe the job', blurb: 'Tell it what this agent is for, in your own words' },
+  { id: 'basics',   label: 'Check the details', blurb: 'We filled these in — correct anything that looks wrong' },
+  { id: 'capture',  label: 'What to collect',  blurb: 'The information that must end up in the dashboard' },
+  { id: 'launch',   label: 'Try it and turn on', blurb: 'Send it a test message before it goes live' },
+]
+
 function AgentBuilder({ initial, onClose, onSaved }: {
   initial: Partial<Agent>
   onClose: () => void
@@ -116,11 +130,16 @@ function AgentBuilder({ initial, onClose, onSaved }: {
   const [err, setErr] = useState<string | null>(null)
   const [drafting, setDrafting] = useState(false)
   const [idea, setIdea] = useState('')
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  // An existing agent opens on the details, not the description box — you came to
+  // change something, not to describe it again from scratch.
+  const [step, setStep] = useState<StepId>(initial.id ? 'basics' : 'describe')
 
   const set = (patch: Partial<Agent>) => setA((prev) => ({ ...prev, ...patch }))
+  const stepIndex = STEPS.findIndex((s) => s.id === step)
 
   const save = async () => {
-    if (!a.name?.trim()) { setErr('Give the agent a name'); return }
+    if (!a.name?.trim()) { setErr('Give the agent a name first'); setStep('basics'); return }
     setSaving(true); setErr(null)
     try {
       if (a.id) await updateAgent(a.id, a)
@@ -136,6 +155,7 @@ function AgentBuilder({ initial, onClose, onSaved }: {
       const d = await draftAgent(idea)
       set({ ...d, id: a.id, active: a.active ?? true, isDefault: a.isDefault ?? false, mode: 'ai' })
       setIdea('')
+      setStep('basics')
     } catch (e) { setErr((e as Error).message) } finally { setDrafting(false) }
   }
 
@@ -144,145 +164,214 @@ function AgentBuilder({ initial, onClose, onSaved }: {
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
         <div style={{ minWidth: 0 }}>
           <button className="btn" onClick={onClose} style={{ marginBottom: 8 }}>← All agents</button>
-          <div className="page-title">{a.id ? a.name : 'New agent'}</div>
-          <div className="page-subtitle">Describe the job, give it a workflow, and it handles the rest</div>
+          <div className="page-title">{a.id ? (a.name || 'Agent') : 'New agent'}</div>
+          <div className="page-subtitle">{STEPS[stepIndex]?.blurb}</div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
           <button className="btn" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save agent'}</button>
+          {(a.id || step !== 'describe') && (
+            <button className="btn btn-primary" onClick={save} disabled={saving}>
+              {saving ? 'Saving…' : 'Save agent'}
+            </button>
+          )}
         </div>
       </div>
+
+      <StepBar current={step} onGo={(id) => setStep(id)} unlocked={!!a.id || !!a.name?.trim()} />
 
       {err && <div className="error-banner">{err}</div>}
 
-      {/* AI draft */}
-      <div className="card" style={{ marginBottom: 16, background: 'var(--blue-light, #EEF0FF)', borderColor: 'var(--blue-mid, #C5C9FF)' }}>
-        <div style={{ fontWeight: 600, marginBottom: 6 }}>✨ Describe it and I'll set it up</div>
-        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10 }}>
-          Write one line, or paste a full specification — role, rules, examples, safety procedures, the lot.
-          Everything you write is carried into the fields below; anything that doesn't fit a field lands in
-          Additional instructions rather than being dropped.
+      {step === 'describe' && (
+        <div className="card" style={{ background: 'var(--blue-light, #EEF0FF)', borderColor: 'var(--blue-mid, #C5C9FF)' }}>
+          <div style={{ fontWeight: 600, marginBottom: 6 }}>What should this agent do?</div>
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.5 }}>
+            Write it the way you would explain it to a new member of staff — what they handle, who messages
+            them, what they need to find out, and anything they must never get wrong. One paragraph is enough
+            to start, and a full written procedure works just as well. We turn it into a working agent that
+            you can correct on the next step.
+          </div>
+          <textarea
+            rows={12}
+            value={idea}
+            onChange={(e) => setIdea(e.target.value)}
+            placeholder={'Example:\n\nYou take fault reports from staff in the Mythos WhatsApp group.\n\nPeople send a photo with a short note, sometimes just a photo, sometimes only text, and often across several messages. Work out what is broken and exactly where it is, and ask only for what is genuinely missing.\n\nNever guess a location. If something is a safety risk — exposed wiring, a gas smell, a major leak — say the area should not be used until it is made safe, and treat it as urgent.'}
+            style={{ width: '100%', fontFamily: 'inherit', lineHeight: 1.6 }}
+          />
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 12, flexWrap: 'wrap' }}>
+            <button className="btn btn-primary" onClick={runDraft} disabled={drafting || !idea.trim()}>
+              {drafting ? 'Setting it up…' : 'Set up my agent'}
+            </button>
+            <button className="btn" onClick={() => setStep('basics')} disabled={drafting}>
+              I'll fill it in myself
+            </button>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+              {drafting ? 'This can take up to a minute for a long description' : 'However long you like'}
+            </span>
+          </div>
         </div>
-        <textarea
-          rows={10}
-          value={idea}
-          onChange={(e) => setIdea(e.target.value)}
-          placeholder={'e.g. You are the Mythos Faults Agent, operating inside the Mythos staff WhatsApp group.\n\nYour purpose is to capture faults, damages and repair requests reported by staff, and turn them into actionable maintenance tasks.\n\nStaff may report faults in different ways — a photo with a short note, several photos, only a photo, only text, or a voice message…'}
-          style={{ width: '100%', fontFamily: 'inherit', lineHeight: 1.5 }}
-        />
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 10, flexWrap: 'wrap' }}>
-          <button className="btn btn-primary" onClick={runDraft} disabled={drafting || !idea.trim()}>
-            {drafting ? 'Designing your agent…' : 'Draft it'}
-          </button>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-            {idea.trim() ? `${idea.trim().split(/\s+/).length} words` : 'Long specifications welcome'}
-            {drafting ? ' · this can take up to a minute for a long spec' : ''}
-          </span>
+      )}
+
+      {step === 'basics' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(300px, 380px)', gap: 16, alignItems: 'start' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
+            <Section title="Name and role" hint="How you recognise it, and who it becomes in the conversation">
+              <Field label="Agent name">
+                <input value={a.name ?? ''} onChange={(e) => set({ name: e.target.value })} placeholder="Faults Agent" />
+              </Field>
+              <Field label="Its role">
+                <input value={a.role ?? ''} onChange={(e) => set({ role: e.target.value })} placeholder="Maintenance coordinator" />
+              </Field>
+              <Field label="One-line summary">
+                <input value={a.description ?? ''} onChange={(e) => set({ description: e.target.value })} placeholder="Takes fault reports from staff and turns them into repair jobs" />
+              </Field>
+            </Section>
+
+            <Section title="What it handles" hint="Who messages it and what they need from it">
+              <textarea rows={6} value={a.jobContext ?? ''} onChange={(e) => set({ jobContext: e.target.value })} />
+            </Section>
+
+            <Section title="How it should work" hint="The steps you expect it to follow. Guidance, not a script — it adapts to how people actually write.">
+              <textarea rows={7} value={a.workflow ?? ''} onChange={(e) => set({ workflow: e.target.value })} />
+            </Section>
+
+            <Section title="What it can rely on" hint="Facts it may state as true — opening hours, policies, who to contact. It will offer to check rather than invent anything not written here.">
+              <textarea rows={5} value={a.knowledge ?? ''} onChange={(e) => set({ knowledge: e.target.value })} />
+            </Section>
+
+            <Section title="How it should sound">
+              <input value={a.tone ?? ''} onChange={(e) => set({ tone: e.target.value })} placeholder="Short, friendly, professional — WhatsApp style" />
+            </Section>
+          </div>
+          <TestPanel agent={a} />
         </div>
-      </div>
+      )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(300px, 380px)', gap: 16, alignItems: 'start' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
-          <Section title="Identity" hint="Who this agent is when someone messages your number">
-            <Field label="Agent name" hint="Internal — how you'll recognise it">
-              <input value={a.name ?? ''} onChange={(e) => set({ name: e.target.value })} placeholder="Procurement Agent" />
-            </Field>
-            <Field label="Role" hint="The job title it takes on in the conversation">
-              <input value={a.role ?? ''} onChange={(e) => set({ role: e.target.value })} placeholder="Procurement officer" />
-            </Field>
-            <Field label="Short description">
-              <input value={a.description ?? ''} onChange={(e) => set({ description: e.target.value })} placeholder="Handles material requests from site staff" />
-            </Field>
-          </Section>
+      {step === 'capture' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(300px, 380px)', gap: 16, alignItems: 'start' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
+            <Section title="Information to collect" hint="It gathers these through normal conversation rather than asking them as a list. Mark something required and it will keep asking until it has it.">
+              <FieldEditor fields={a.fields ?? []} onChange={(fields) => set({ fields })} />
+            </Section>
 
-          <Section title="The job" hint="What this agent handles, who it talks to, and anything it must know about how you work">
-            <textarea
-              rows={6}
-              value={a.jobContext ?? ''}
-              onChange={(e) => set({ jobContext: e.target.value })}
-              placeholder={'You handle material and supply requests from site staff.\nRequests come in informally, often mid-job and in a hurry.\nYour goal is to turn a rough request into something the buying team can act on without chasing anyone.'}
-            />
-          </Section>
+            <Section title="When is the job finished?" hint="What has to be true before it stops asking questions and files the work">
+              <textarea rows={3} value={a.completionCriteria ?? ''} onChange={(e) => set({ completionCriteria: e.target.value })}
+                placeholder="Once we know what is broken, exactly where it is, and there is at least one clear photo." />
+            </Section>
 
-          <Section title="Workflow" hint="The steps you expect it to follow — guidance, not a rigid script. It will adapt and use its own judgement around this.">
-            <textarea
-              rows={7}
-              value={a.workflow ?? ''}
-              onChange={(e) => set({ workflow: e.target.value })}
-              placeholder={'1. Acknowledge the request.\n2. Work out what they need, how many, and by when.\n3. Find out which site and where to deliver.\n4. Establish urgency.\n5. Read it back and confirm.'}
-            />
-          </Section>
+            <Section title="When should a person take over?" hint="Flags the chat for you instead of handling it alone">
+              <textarea rows={3} value={a.escalationRule ?? ''} onChange={(e) => set({ escalationRule: e.target.value })}
+                placeholder="Anything that could injure someone — exposed wiring, a gas smell, flooding, broken glass." />
+            </Section>
 
-          <Section title="What it knows" hint="Facts it can rely on — prices, hours, policies, suppliers. It will say it needs to check rather than invent anything not written here.">
-            <textarea
-              rows={6}
-              value={a.knowledge ?? ''}
-              onChange={(e) => set({ knowledge: e.target.value })}
-              placeholder={'Deliveries to site are next-day if ordered before 15:00.\nAnything critical is escalated to the buying team immediately.'}
-            />
-          </Section>
+            <Section title="Anything else it must know" hint="House rules, edge cases and worked examples. Passed to the agent word for word — worth checking here first if it ever behaves oddly.">
+              <textarea rows={7} value={a.systemPrompt ?? ''} onChange={(e) => set({ systemPrompt: e.target.value })}
+                placeholder={'Treat several unrelated faults in one message as separate jobs.\nCombine messages that clearly describe the same fault.\nNever guess a location — ask.'} />
+            </Section>
+          </div>
+          <TestPanel agent={a} />
+        </div>
+      )}
 
-          <Section title="Information to capture" hint="What should end up in the dashboard. It collects these through natural conversation, not by interrogating.">
-            <FieldEditor fields={a.fields ?? []} onChange={(fields) => set({ fields })} />
-          </Section>
+      {step === 'launch' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(300px, 380px)', gap: 16, alignItems: 'start' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
+            <Section title="Ready to go live?" hint="Try it on the right first — the test is a real conversation and nothing is sent to WhatsApp.">
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
+                <input type="checkbox" checked={a.active ?? true} onChange={(e) => set({ active: e.target.checked })} />
+                <span><strong>Answer real messages</strong> — turn this off to park the agent without deleting it</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
+                <input type="checkbox" checked={a.isDefault ?? false} onChange={(e) => set({ isDefault: e.target.checked })} />
+                <span><strong>Handle anything unrecognised</strong> — messages no other agent claims come here</span>
+              </label>
+            </Section>
 
-          <Section title="Behaviour">
-            <Field label="Tone">
-              <input value={a.tone ?? ''} onChange={(e) => set({ tone: e.target.value })} placeholder="Warm, direct and professional" />
-            </Field>
-            <Field label="When is it complete?" hint="When the request should move to Ready for review">
-              <textarea rows={2} value={a.completionCriteria ?? ''} onChange={(e) => set({ completionCriteria: e.target.value })}
-                placeholder="Once item, quantity, date, location and urgency are known and the person has confirmed." />
-            </Field>
-            <Field label="When should a human step in?" hint="Creates a task and flags the chat for you">
-              <textarea rows={2} value={a.escalationRule ?? ''} onChange={(e) => set({ escalationRule: e.target.value })}
-                placeholder="Anything over €5,000, hired machinery, or a complaint about an existing order." />
-            </Field>
-          </Section>
-
-          <Section title="Additional instructions" hint="House rules, edge cases, worked examples — anything that doesn't belong in the fields above. Passed to the agent verbatim.">
-            <textarea
-              rows={8}
-              value={a.systemPrompt ?? ''}
-              onChange={(e) => set({ systemPrompt: e.target.value })}
-              placeholder={'If a staff member reports several unrelated faults in one message, treat them as separate faults.\nCombine messages that clearly refer to the same fault.\nNever guess the location — ask.'}
-            />
-          </Section>
-
-          <Section title="Settings">
-            <Field label="Intelligence" hint="Higher is smarter and slower; balanced suits most agents">
-              <select value={a.intelligence ?? 'balanced'} onChange={(e) => set({ intelligence: e.target.value as Agent['intelligence'] })}>
-                <option value="fast">Fast — quick, simple conversations</option>
-                <option value="balanced">Balanced — recommended</option>
-                <option value="smart">Smart — complex judgement, nuanced replies</option>
-              </select>
-            </Field>
-            <Field label="Trigger words" hint="Used to pick this agent when several are active. Comma separated.">
+            <Section title="Which messages reach it" hint="Only matters when more than one agent is switched on. Words someone would naturally use — it also judges by meaning, so this is a hint rather than a filter.">
               <input
                 value={(a.triggerKeywords ?? []).join(', ')}
                 onChange={(e) => set({ triggerKeywords: e.target.value.split(',').map((k) => k.trim()).filter(Boolean) })}
-                placeholder="order, buy, material, supplier"
+                placeholder="broken, leak, not working, damaged, repair"
               />
-            </Field>
-            <Field label="Mode">
-              <select value={a.mode ?? 'ai'} onChange={(e) => set({ mode: e.target.value as Agent['mode'] })}>
-                <option value="ai">AI conversation — understands and adapts</option>
-                <option value="form">Fixed questions — asks each field in order</option>
-              </select>
-            </Field>
-            <div style={{ display: 'flex', gap: 18, marginTop: 4 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-                <input type="checkbox" checked={a.active ?? true} onChange={(e) => set({ active: e.target.checked })} /> Active
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-                <input type="checkbox" checked={a.isDefault ?? false} onChange={(e) => set({ isDefault: e.target.checked })} /> Default agent
-              </label>
-            </div>
-          </Section>
-        </div>
+            </Section>
 
-        <TestPanel agent={a} />
+            <div className="card">
+              <button
+                className="btn"
+                onClick={() => setShowAdvanced((v) => !v)}
+                style={{ width: '100%', textAlign: 'left' }}
+              >
+                {showAdvanced ? '▾' : '▸'} Advanced settings
+              </button>
+              {showAdvanced && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 14 }}>
+                  <Field label="How much thinking it does" hint="Balanced suits almost everything. Smart is slower and costs more — worth it only for genuinely difficult judgement calls.">
+                    <select value={a.intelligence ?? 'balanced'} onChange={(e) => set({ intelligence: e.target.value as Agent['intelligence'] })}>
+                      <option value="fast">Quick — short, simple exchanges</option>
+                      <option value="balanced">Balanced — recommended</option>
+                      <option value="smart">Smart — difficult judgement, reads photos</option>
+                    </select>
+                  </Field>
+                  <Field label="Conversation style" hint="Fixed questions ignores everything above and simply asks each field in order.">
+                    <select value={a.mode ?? 'ai'} onChange={(e) => set({ mode: e.target.value as Agent['mode'] })}>
+                      <option value="ai">Natural conversation — understands and adapts</option>
+                      <option value="form">Fixed questions — asks each field in order</option>
+                    </select>
+                  </Field>
+                </div>
+              )}
+            </div>
+          </div>
+          <TestPanel agent={a} />
+        </div>
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 20, gap: 8 }}>
+        <button className="btn" onClick={() => setStep(STEPS[Math.max(0, stepIndex - 1)].id)} disabled={stepIndex === 0}>
+          ← Back
+        </button>
+        {stepIndex < STEPS.length - 1 ? (
+          <button className="btn btn-primary" onClick={() => setStep(STEPS[stepIndex + 1].id)}>
+            Next: {STEPS[stepIndex + 1].label} →
+          </button>
+        ) : (
+          <button className="btn btn-primary" onClick={save} disabled={saving}>
+            {saving ? 'Saving…' : a.id ? 'Save changes' : 'Create agent'}
+          </button>
+        )}
       </div>
+    </div>
+  )
+}
+
+function StepBar({ current, onGo, unlocked }: { current: StepId; onGo: (id: StepId) => void; unlocked: boolean }) {
+  const idx = STEPS.findIndex((s) => s.id === current)
+  return (
+    <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+      {STEPS.map((s, i) => {
+        const done = i < idx
+        const active = i === idx
+        // Jumping ahead before the agent has a name would land you on a test panel
+        // with nothing to test, so hold those steps until there is something there.
+        const reachable = i === 0 || unlocked
+        return (
+          <button
+            key={s.id}
+            onClick={() => reachable && onGo(s.id)}
+            disabled={!reachable}
+            style={{
+              flex: '1 1 150px', textAlign: 'left', padding: '10px 12px', borderRadius: 8, cursor: reachable ? 'pointer' : 'not-allowed',
+              border: `1px solid ${active ? 'var(--primary, #2B35FF)' : 'var(--border)'}`,
+              background: active ? 'var(--blue-light, #EEF0FF)' : 'transparent',
+              opacity: reachable ? 1 : 0.5,
+            }}
+          >
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+              {done ? '✓' : `Step ${i + 1}`}
+            </div>
+            <div style={{ fontSize: 13, fontWeight: active ? 600 : 500 }}>{s.label}</div>
+          </button>
+        )
+      })}
     </div>
   )
 }
