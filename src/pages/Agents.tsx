@@ -18,6 +18,7 @@ const BLANK: Partial<Agent> = {
   intelligence: 'balanced',
   active: true,
   isDefault: false,
+  integration: '',
   systemPrompt: '',
 }
 
@@ -284,6 +285,16 @@ function AgentBuilder({ initial, onClose, onSaved }: {
                 <input type="checkbox" checked={a.isDefault ?? false} onChange={(e) => set({ isDefault: e.target.checked })} />
                 <span><strong>Handle anything unrecognised</strong> — messages no other agent claims come here</span>
               </label>
+            </Section>
+
+            <Section title="Where its tasks go" hint="Off keeps everything inside Wapilot. Switch it on and every fault this agent files also lands in FusionTask's triage inbox, with its photos.">
+              <select
+                value={a.integration ?? ''}
+                onChange={(e) => set({ integration: e.target.value })}
+              >
+                <option value="">Wapilot only — tasks stay in this dashboard</option>
+                <option value="fusiontask">FusionTask — file each job into the triage inbox</option>
+              </select>
             </Section>
 
             <Section title="Which messages reach it" hint="Only matters when more than one agent is switched on. Words someone would naturally use — it also judges by meaning, so this is a hint rather than a filter.">

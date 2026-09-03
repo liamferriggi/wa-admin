@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getBrief, sendBrief, getWebhooks, createWebhook, deleteWebhook, getAgentTemplates, installAgentTemplate, getWaitlist } from '../api'
+import { getBrief, sendBrief, getWebhooks, createWebhook, deleteWebhook, getAgentTemplates, installAgentTemplate, getWaitlist, getSettings, saveSettings } from '../api'
 import type { AgentTemplate, Webhook } from '../types'
 import type { WaitlistEntry } from '../api'
 
@@ -12,10 +12,84 @@ export default function SettingsPage() {
           <div className="page-subtitle">Daily brief, outbound webhooks, agent templates, and waitlist</div>
         </div>
       </div>
+      <BusinessSettingsCard />
       <BriefCard />
       <TemplatesCard />
       <WebhooksCard />
       <WaitlistCard />
+    </div>
+  )
+}
+
+const SETTING_FIELDS: Array<{ key: string; label: string; hint: string; placeholder: string }> = [
+  { key: 'ownerPhone', label: 'Your WhatsApp number', hint: 'Receives the daily brief, and can use "agent:", "tasks" and "note:" from WhatsApp. Digits only or with spaces — either is fine.', placeholder: '35699123456' },
+  { key: 'managerPhones', label: 'Manager numbers', hint: 'Get a message with the photos whenever a fault is filed. Comma separated. Leave empty for none. A manager who reported the fault themselves is not sent their own photos back.', placeholder: '35699123456, 35677123456' },
+  { key: 'fusionTaskProperty', label: 'Property name in FusionTask', hint: 'Faults are filed against this property. Must match the name in FusionTask.', placeholder: 'Mythos Fitness Complex' },
+  { key: 'conversationWindowMinutes', label: 'How long a report stays open (minutes)', hint: 'A follow-up within this window joins the report in progress; after it, the next message starts a fresh one. 360 = 6 hours.', placeholder: '360' },
+  { key: 'briefHour', label: 'Daily brief hour (0–23)', hint: 'Server-local hour the morning brief is sent.', placeholder: '7' },
+]
+
+// These used to live in the server environment, so changing one meant someone with
+// shell access. They are editable here so an installation can be set up entirely
+// from the portal. Anything left blank falls back to the environment value, which
+// is shown underneath as "currently".
+function BusinessSettingsCard() {
+  const [values, setValues] = useState<Record<string, string>>({})
+  const [effective, setEffective] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    getSettings()
+      .then((r) => { setValues(r.settings); setEffective(r.effective) })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const save = async () => {
+    setSaving(true); setError(null)
+    try {
+      const r = await saveSettings(values)
+      setValues(r.settings); setEffective(r.effective as Record<string, string>)
+      setSaved(true); setTimeout(() => setSaved(false), 2500)
+    } catch (e) { setError((e as Error).message) } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="card" style={{ marginBottom: 16 }}>
+      <div style={{ fontWeight: 600, marginBottom: 2 }}>⚙️ Business settings</div>
+      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>
+        Leave a field empty to use the server default. WhatsApp credentials are deliberately not editable here.
+      </div>
+      {error && <div className="error-banner">{error}</div>}
+      {loading ? <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Loading…</div> : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {SETTING_FIELDS.map((f) => (
+            <div key={f.key}>
+              <label className="form-label" style={{ display: 'block', marginBottom: 2 }}>{f.label}</label>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{f.hint}</div>
+              <input
+                value={values[f.key] ?? ''}
+                placeholder={f.placeholder}
+                onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
+                style={{ width: '100%' }}
+              />
+              {!values[f.key] && effective[f.key] && (
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>
+                  currently <code>{effective[f.key]}</code> (from the server)
+                </div>
+              )}
+            </div>
+          ))}
+          <div>
+            <button className="btn btn-primary" onClick={save} disabled={saving}>
+              {saving ? 'Saving…' : saved ? 'Saved ✅' : 'Save settings'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

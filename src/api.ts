@@ -99,6 +99,12 @@ export const createNote = (chatId: string, data: { author?: string; text: string
 export const getBrief = () => request<{ brief: string }>('/api/brief').then((r) => r.brief)
 export const sendBrief = () => request<{ sent: boolean }>('/api/brief/send', { method: 'POST' })
 
+// Business settings — portal-managed, falling back to the server environment
+export type SettingsPayload = { settings: Record<string, string>; effective: Record<string, string> }
+export const getSettings = () => request<SettingsPayload>('/api/settings')
+export const saveSettings = (patch: Record<string, string>) =>
+  request<SettingsPayload>('/api/settings', { method: 'PUT', body: JSON.stringify(patch) })
+
 // Webhooks
 export const getWebhooks = () =>
   request<{ webhooks: Webhook[] }>('/api/webhooks').then((r) => r.webhooks)

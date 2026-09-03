@@ -9,6 +9,7 @@ export interface Agent {
   systemPrompt: string
   fields?: FieldConfig[]
   active: boolean
+  integration?: string   // 'fusiontask' files this agent's tasks into FusionTask triage
   isDefault: boolean
   mode: AgentMode
   role: string
