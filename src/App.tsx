@@ -7,6 +7,7 @@ import TasksPage from './pages/Tasks'
 import Agents from './pages/Agents'
 import Conversations from './pages/Conversations'
 import ApiKeys from './pages/ApiKeys'
+import ClientsPage from './pages/Clients'
 import SettingsPage from './pages/Settings'
 import Login from './pages/Login'
 
@@ -36,6 +37,7 @@ function ProtectedLayout() {
           <Route path="/conversations" element={<Conversations />} />
           <Route path="/conversations/:id" element={<Conversations />} />
           <Route path="/api-keys" element={<ApiKeys />} />
+          <Route path="/clients" element={<ClientsPage />} />
         </Routes>
       </main>
     </div>

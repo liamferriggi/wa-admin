@@ -99,6 +99,26 @@ export const createNote = (chatId: string, data: { author?: string; text: string
 export const getBrief = () => request<{ brief: string }>('/api/brief').then((r) => r.brief)
 export const sendBrief = () => request<{ sent: boolean }>('/api/brief/send', { method: 'POST' })
 
+// Tenants — one client, one WhatsApp number, one database
+export type Tenant = {
+  id: string; name: string; phoneNumberId: string; wabaId?: string
+  databasePath: string; mediaDir: string; active: boolean; createdAt: string
+  usesEnvCredentials: boolean
+}
+export type ConnectionPack = {
+  tenant: { id: string; name: string; phoneNumberId: string }
+  webhook: { callbackUrl: string; verifyToken: string; subscribeTo: string[] }
+  api: { baseUrl: string; authHeader: string; scopes: string[]; events: string[]; signatureHeader: string; signature: string }
+  instructions: string[]
+}
+export const getTenants = () => request<{ tenants: Tenant[] }>('/api/tenants').then((r) => r.tenants)
+export const createTenant = (data: { name: string; phoneNumberId: string; wabaId?: string; accessToken: string }) =>
+  request<Tenant>('/api/tenants', { method: 'POST', body: JSON.stringify(data) })
+export const updateTenant = (id: string, data: { name?: string; active?: boolean; accessToken?: string; wabaId?: string }) =>
+  request<Tenant>(`/api/tenants/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+export const deleteTenant = (id: string) => request<void>(`/api/tenants/${id}`, { method: 'DELETE' })
+export const getConnectionPack = (id: string) => request<ConnectionPack>(`/api/tenants/${id}/connection`)
+
 // Business settings — portal-managed, falling back to the server environment
 export type SettingsPayload = { settings: Record<string, string>; effective: Record<string, string> }
 export const getSettings = () => request<SettingsPayload>('/api/settings')
