@@ -9,7 +9,9 @@ export interface Agent {
   systemPrompt: string
   fields?: FieldConfig[]
   active: boolean
-  integration?: string   // 'fusiontask' files this agent's tasks into FusionTask triage
+  integration?: string   // '' | 'fusiontask' | 'webhook'
+  integrationUrl?: string      // where a 'webhook' destination posts each filed fault
+  integrationApiKey?: string   // bearer token, or a secret used to sign the body
   isDefault: boolean
   mode: AgentMode
   role: string

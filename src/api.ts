@@ -99,6 +99,15 @@ export const createNote = (chatId: string, data: { author?: string; text: string
 export const getBrief = () => request<{ brief: string }>('/api/brief').then((r) => r.brief)
 export const sendBrief = () => request<{ sent: boolean }>('/api/brief/send', { method: 'POST' })
 
+// Outbound delivery log
+export type Delivery = {
+  id: string; kind: string; target: string; event: string; status: 'pending' | 'delivered' | 'failed'
+  attempts: number; lastError?: string; nextAttemptAt: string; createdAt: string; deliveredAt?: string
+}
+export const getDeliveries = (status?: string) =>
+  request<{ deliveries: Delivery[] }>(`/api/deliveries${status ? `?status=${status}` : ''}`).then((r) => r.deliveries)
+export const retryDelivery = (id: string) => request<void>(`/api/deliveries/${id}/retry`, { method: 'POST' })
+
 // Tenants — one client, one WhatsApp number, one database
 export type Tenant = {
   id: string; name: string; phoneNumberId: string; wabaId?: string

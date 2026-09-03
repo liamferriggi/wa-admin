@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { getBrief, sendBrief, getWebhooks, createWebhook, deleteWebhook, getAgentTemplates, installAgentTemplate, getWaitlist, getSettings, saveSettings } from '../api'
+import { getBrief, sendBrief, getWebhooks, createWebhook, deleteWebhook, getAgentTemplates, installAgentTemplate, getWaitlist, getSettings, saveSettings, getDeliveries, retryDelivery } from '../api'
+import type { Delivery } from '../api'
 import type { AgentTemplate, Webhook } from '../types'
 import type { WaitlistEntry } from '../api'
 
@@ -16,6 +17,7 @@ export default function SettingsPage() {
       <BriefCard />
       <TemplatesCard />
       <WebhooksCard />
+      <DeliveriesCard />
       <WaitlistCard />
     </div>
   )
@@ -90,6 +92,61 @@ function BusinessSettingsCard() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// A delivery that failed used to be invisible — the event was simply gone. This
+// makes every outbound attempt inspectable and replayable.
+function DeliveriesCard() {
+  const [rows, setRows] = useState<Delivery[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState<string | null>(null)
+
+  const load = () => getDeliveries().then(setRows).catch((e) => setError(e.message))
+  useEffect(() => { load() }, [])
+
+  const replay = async (id: string) => {
+    setBusy(id)
+    try { await retryDelivery(id); await load() }
+    catch (e) { setError((e as Error).message) } finally { setBusy(null) }
+  }
+
+  const colour = (s: Delivery['status']) =>
+    s === 'delivered' ? { c: '#1B7F4C', b: '#E4F6EC' } : s === 'failed' ? { c: '#A33B2E', b: '#F6E4E0' } : { c: '#2B35FF', b: '#EEF0FF' }
+
+  return (
+    <div className="card" style={{ marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+        <div style={{ fontWeight: 600 }}>📤 Outbound deliveries</div>
+        <button className="btn btn-sm" onClick={load}>Refresh</button>
+      </div>
+      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
+        Every webhook and filed fault sent to an outside system. Failures are retried with backoff and kept here, so nothing is lost quietly.
+      </div>
+      {error && <div className="error-banner">{error}</div>}
+      {rows.length === 0 ? (
+        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Nothing sent yet.</div>
+      ) : rows.slice(0, 25).map((d) => {
+        const col = colour(d.status)
+        return (
+          <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+            <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 99, color: col.c, background: col.b }}>
+              {d.status}
+            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12.5 }}>{d.event} → <code style={{ fontSize: 11 }}>{d.target}</code></div>
+              {d.lastError && <div style={{ fontSize: 11, color: '#A33B2E' }}>{d.lastError.slice(0, 120)}</div>}
+            </div>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{d.attempts} {d.attempts === 1 ? 'try' : 'tries'}</span>
+            {d.status !== 'delivered' && (
+              <button className="btn btn-sm" onClick={() => replay(d.id)} disabled={busy === d.id}>
+                {busy === d.id ? '…' : 'Retry now'}
+              </button>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }

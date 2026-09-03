@@ -294,7 +294,20 @@ function AgentBuilder({ initial, onClose, onSaved }: {
               >
                 <option value="">Wapilot only — tasks stay in this dashboard</option>
                 <option value="fusiontask">FusionTask — file each job into the triage inbox</option>
+                <option value="webhook">Your own system — send each job to a URL</option>
               </select>
+              {a.integration === 'webhook' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
+                  <Field label="Endpoint URL" hint="Each filed fault is POSTed here as JSON. Retried with backoff if your endpoint is down, and never dropped — see the delivery log in Settings.">
+                    <input value={a.integrationUrl ?? ''} onChange={(e) => set({ integrationUrl: e.target.value })}
+                      placeholder="https://your-system.example.com/faults" />
+                  </Field>
+                  <Field label="Secret or bearer token" hint="Starts with 'Bearer ' and it is sent as an Authorization header. Anything else is used to sign the body as X-Wapilot-Signature (HMAC-SHA256, hex).">
+                    <input type="password" value={a.integrationApiKey ?? ''} onChange={(e) => set({ integrationApiKey: e.target.value })}
+                      placeholder="Bearer …  or  a shared secret" />
+                  </Field>
+                </div>
+              )}
             </Section>
 
             <Section title="Which messages reach it" hint="Only matters when more than one agent is switched on. Words someone would naturally use — it also judges by meaning, so this is a hint rather than a filter.">
