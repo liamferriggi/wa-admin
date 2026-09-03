@@ -29,6 +29,7 @@ const SETTING_FIELDS: Array<{ key: string; label: string; hint: string; placehol
   { key: 'fusionTaskProperty', label: 'Property name in FusionTask', hint: 'Faults are filed against this property. Must match the name in FusionTask.', placeholder: 'Mythos Fitness Complex' },
   { key: 'conversationWindowMinutes', label: 'How long a report stays open (minutes)', hint: 'A follow-up within this window joins the report in progress; after it, the next message starts a fresh one. 360 = 6 hours.', placeholder: '360' },
   { key: 'briefHour', label: 'Daily brief hour (0–23)', hint: 'Server-local hour the morning brief is sent.', placeholder: '7' },
+  { key: 'shareTokenDays', label: 'Photo link lifetime (days)', hint: 'How long a photo or video link stays reachable. Systems you file into download their own copy immediately, so a short life is safe and stops old links living forever.', placeholder: '30' },
 ]
 
 // These used to live in the server environment, so changing one meant someone with
