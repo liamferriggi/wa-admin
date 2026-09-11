@@ -10,6 +10,7 @@ export interface Agent {
   fields?: FieldConfig[]
   active: boolean
   integration?: string   // '' | 'fusiontask' | 'webhook'
+  code?: string          // 'fix' sends 'fix: …' straight to this agent
   integrationUrl?: string      // where a 'webhook' destination posts each filed fault
   integrationApiKey?: string   // bearer token, or a secret used to sign the body
   isDefault: boolean

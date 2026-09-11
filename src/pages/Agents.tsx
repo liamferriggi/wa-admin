@@ -310,6 +310,15 @@ function AgentBuilder({ initial, onClose, onSaved }: {
               )}
             </Section>
 
+            <Section title="Its code" hint="Start a WhatsApp message with this word and a colon to go straight to this agent — no guessing. For example: fix: the pool light is out. A short word, letters and numbers only. note, task, reminder and idea are taken.">
+              <input
+                value={a.code ?? ''}
+                onChange={(e) => set({ code: e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 10) })}
+                placeholder="fix"
+                style={{ maxWidth: 160 }}
+              />
+            </Section>
+
             <Section title="Which messages reach it" hint="Only matters when more than one agent is switched on. Words someone would naturally use — it also judges by meaning, so this is a hint rather than a filter.">
               <input
                 value={(a.triggerKeywords ?? []).join(', ')}
