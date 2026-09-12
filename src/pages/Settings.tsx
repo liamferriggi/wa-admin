@@ -202,12 +202,13 @@ function TemplatesCard() {
 function WebhooksCard() {
   const [hooks, setHooks] = useState<Webhook[]>([])
   const [url, setUrl] = useState('')
+  const [secret, setSecret] = useState('')
   const load = () => getWebhooks().then(setHooks).catch(() => {})
   useEffect(() => { load() }, [])
   const add = async () => {
     if (!url.trim()) return
-    await createWebhook({ url })
-    setUrl(''); load()
+    await createWebhook({ url, secret: secret.trim() || undefined })
+    setUrl(''); setSecret(''); load()
   }
   const remove = async (id: string) => { await deleteWebhook(id); load() }
   return (
@@ -215,16 +216,23 @@ function WebhooksCard() {
       <div style={{ fontWeight: 600, marginBottom: 8 }}>🔗 Outbound webhooks</div>
       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
         POSTs events (task.created, task.updated, chat.state_changed, request.ready_for_review) to your systems — Sheets, Zapier, ERP.
+        A key is optional: paste one and each call is signed with <code>X-Wapilot-Signature</code>, or prefix it with
+        <code>Bearer </code> to send it as an Authorization header instead. The AI CRM accepts either — get its URL and key
+        from CRM → Settings → WhatsApp agent.
       </div>
       {hooks.map((h) => (
         <div key={h.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: 13 }}>
           <code style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.url}</code>
           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{h.events.join(', ')}</span>
+          <span style={{ fontSize: 11, color: h.hasSecret ? 'var(--ok, #16a34a)' : 'var(--text-muted)' }}>
+            {h.hasSecret ? '🔒 signed' : 'unsigned'}
+          </span>
           <button className="btn" onClick={() => remove(h.id)}>🗑</button>
         </div>
       ))}
       <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
         <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://your-system.example/webhook" style={{ flex: 1 }} />
+        <input value={secret} onChange={(e) => setSecret(e.target.value)} placeholder="key / secret (optional)" style={{ flex: 1 }} />
         <button className="btn btn-primary" onClick={add}>Add webhook</button>
       </div>
     </div>
