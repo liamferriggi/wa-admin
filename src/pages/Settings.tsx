@@ -199,23 +199,36 @@ function TemplatesCard() {
   )
 }
 
+const WEBHOOK_EVENTS: Array<{ id: string; label: string; hint: string }> = [
+  { id: 'task.created', label: 'A job is created', hint: 'The usual choice — one message per new job' },
+  { id: 'task.updated', label: 'A job changes', hint: 'Completed, reassigned or edited' },
+  { id: 'request.ready_for_review', label: 'A report is ready', hint: 'Everything gathered, awaiting approval' },
+  { id: 'chat.state_changed', label: 'A chat changes state', hint: 'Needs reply, waiting, snoozed, done' },
+]
+
 function WebhooksCard() {
   const [hooks, setHooks] = useState<Webhook[]>([])
   const [url, setUrl] = useState('')
   const [secret, setSecret] = useState('')
+  // Never default to everything: a receiver signed up to all events gets fault
+  // reports and reminders too, which is how a CRM ended up full of things that
+  // were not leads.
+  const [events, setEvents] = useState<string[]>(['task.created'])
   const load = () => getWebhooks().then(setHooks).catch(() => {})
   useEffect(() => { load() }, [])
+  const toggle = (id: string) =>
+    setEvents((prev) => prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id])
   const add = async () => {
-    if (!url.trim()) return
-    await createWebhook({ url, secret: secret.trim() || undefined })
-    setUrl(''); setSecret(''); load()
+    if (!url.trim() || events.length === 0) return
+    await createWebhook({ url, events, secret: secret.trim() || undefined })
+    setUrl(''); setSecret(''); setEvents(['task.created']); load()
   }
   const remove = async (id: string) => { await deleteWebhook(id); load() }
   return (
     <div className="card" style={{ marginBottom: 16 }}>
       <div style={{ fontWeight: 600, marginBottom: 8 }}>🔗 Outbound webhooks</div>
       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
-        POSTs events (task.created, task.updated, chat.state_changed, request.ready_for_review) to your systems — Sheets, Zapier, ERP.
+        Sends chosen events to your own systems — a CRM, Sheets, Zapier, an ERP. Pick only the events that system should receive; anything you tick is sent for every agent.
         A key is optional: paste one and each call is signed with <code>X-Wapilot-Signature</code>, or prefix it with
         <code>Bearer </code> to send it as an Authorization header instead. The AI CRM accepts either — get its URL and key
         from CRM → Settings → WhatsApp agent.
@@ -223,7 +236,9 @@ function WebhooksCard() {
       {hooks.map((h) => (
         <div key={h.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: 13 }}>
           <code style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.url}</code>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{h.events.join(', ')}</span>
+          <span style={{ fontSize: 11, color: h.events.includes('*') ? '#A8491B' : 'var(--text-muted)' }}>
+            {h.events.includes('*') ? 'every event — including faults and reminders' : h.events.join(', ')}
+          </span>
           <span style={{ fontSize: 11, color: h.hasSecret ? 'var(--ok, #16a34a)' : 'var(--text-muted)' }}>
             {h.hasSecret ? '🔒 signed' : 'unsigned'}
           </span>
@@ -233,7 +248,26 @@ function WebhooksCard() {
       <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
         <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://your-system.example/webhook" style={{ flex: 1 }} />
         <input value={secret} onChange={(e) => setSecret(e.target.value)} placeholder="key / secret (optional)" style={{ flex: 1 }} />
-        <button className="btn btn-primary" onClick={add}>Add webhook</button>
+      </div>
+      <div style={{ marginTop: 12 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Send it which events?</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {WEBHOOK_EVENTS.map((ev) => (
+            <label key={ev.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13 }}>
+              <input type="checkbox" checked={events.includes(ev.id)} onChange={() => toggle(ev.id)} style={{ marginTop: 3 }} />
+              <span>
+                {ev.label}
+                <span style={{ color: 'var(--text-muted)', fontSize: 11, display: 'block' }}>{ev.hint}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+        {events.length === 0 && (
+          <div style={{ fontSize: 12, color: '#A8491B', marginTop: 8 }}>Choose at least one event.</div>
+        )}
+        <button className="btn btn-primary" onClick={add} disabled={!url.trim() || events.length === 0} style={{ marginTop: 12 }}>
+          Add webhook
+        </button>
       </div>
     </div>
   )
