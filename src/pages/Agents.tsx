@@ -294,6 +294,7 @@ function AgentBuilder({ initial, onClose, onSaved }: {
               >
                 <option value="">Wapilot only — tasks stay in this dashboard</option>
                 <option value="fusiontask">FusionTask — file each job into the triage inbox</option>
+                <option value="procurement">AI Procurement — file each request as a purchase request</option>
                 <option value="webhook">Your own system — send each job to a URL</option>
               </select>
               {a.integration === 'webhook' && (
