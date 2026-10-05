@@ -1,6 +1,6 @@
 # Single sign-on: WhatsApp Admin
 
-**Status:** TODO. Change this to `DONE (date)` when shipped.
+**Status:** DONE (2026-10-06)
 **Requested by:** Liam, via the CEO Dashboard session, 2026-10-06
 **Plan:** https://claude.ai/artifact/8nZDCEXFuDXA5uz4Ncd88P
 **Batch 4a. The app already reads `ift_token`. Add the access check, the no-access page and the sign-out link. About 30 minutes.**

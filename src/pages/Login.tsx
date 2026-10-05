@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, SSO_START_URL } from '../context/AuthContext'
 
 export default function Login() {
   const { login } = useAuth()
@@ -104,6 +104,14 @@ export default function Login() {
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
+
+          <a
+            href={SSO_START_URL}
+            className="btn"
+            style={{ width: '100%', justifyContent: 'center', padding: '10px 16px', fontSize: 14, marginTop: 12, textDecoration: 'none' }}
+          >
+            Sign in with Infinite Fusion
+          </a>
         </div>
 
         <div style={{ textAlign: 'center', marginTop: 20, fontSize: 12, color: 'var(--text-muted)' }}>

@@ -10,9 +10,10 @@ import ApiKeys from './pages/ApiKeys'
 import ClientsPage from './pages/Clients'
 import SettingsPage from './pages/Settings'
 import Login from './pages/Login'
+import NoAccess from './pages/NoAccess'
 
 function ProtectedLayout() {
-  const { user, loading } = useAuth()
+  const { user, loading, noAccess } = useAuth()
 
   if (loading) {
     return (
@@ -22,6 +23,7 @@ function ProtectedLayout() {
     )
   }
 
+  if (noAccess) return <NoAccess />
   if (!user) return <Navigate to="/login" replace />
 
   return (
@@ -58,8 +60,9 @@ export default function App() {
 }
 
 function LoginGuard() {
-  const { user, loading } = useAuth()
+  const { user, loading, noAccess } = useAuth()
   if (loading) return <div className="loading" style={{ height: '100vh' }}>Loading…</div>
+  if (noAccess) return <NoAccess />
   if (user) return <Navigate to="/" replace />
   return <Login />
 }

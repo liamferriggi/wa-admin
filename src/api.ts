@@ -9,6 +9,7 @@ function getToken(): string | null {
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken()
   const res = await fetch(`${BASE_URL}${path}`, {
+    credentials: 'include', // the shared SSO cookie (ift_token)
     ...options,
     headers: {
       'Content-Type': 'application/json',
