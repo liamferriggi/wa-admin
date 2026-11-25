@@ -161,3 +161,20 @@ export const createApiKey = (data: { name: string }) =>
   request<ApiKey & { key: string }>('/api/api-keys', { method: 'POST', body: JSON.stringify(data) })
 export const deleteApiKey = (id: string) =>
   request<void>(`/api/api-keys/${id}`, { method: 'DELETE' })
+
+// Christmas Party RSVP
+export type RsvpGuest = { id: string; booking_id: string; name: string; mobile: string; created_at: string }
+export type RsvpBooking = { id: string; sender: string; company: string; status: string; created_at: string; updated_at: string; guests: RsvpGuest[] }
+export type RsvpData = { event: string; open: boolean; template: string; totals: { bookings: number; guests: number; cancelled: number }; bookings: RsvpBooking[] }
+export const getRsvp = () => request<RsvpData>('/api/rsvp')
+export const removeRsvpGuest = (id: string) => request<void>(`/api/rsvp/guests/${id}`, { method: 'DELETE' })
+export const cancelRsvpBooking = (id: string) => request<void>(`/api/rsvp/bookings/${id}/cancel`, { method: 'POST' })
+export async function downloadRsvpCsv(): Promise<void> {
+  const token = getToken()
+  const res = await fetch(`${BASE_URL}/api/rsvp.csv`, { credentials: 'include', headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  if (!res.ok) throw new Error(`Download failed (${res.status})`)
+  const url = URL.createObjectURL(await res.blob())
+  const a = document.createElement('a')
+  a.href = url; a.download = 'christmas-party-rsvp.csv'; a.click()
+  URL.revokeObjectURL(url)
+}

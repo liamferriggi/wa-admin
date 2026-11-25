@@ -9,6 +9,7 @@ import Conversations from './pages/Conversations'
 import ApiKeys from './pages/ApiKeys'
 import ClientsPage from './pages/Clients'
 import SettingsPage from './pages/Settings'
+import RsvpPage from './pages/Rsvp'
 import Login from './pages/Login'
 import NoAccess from './pages/NoAccess'
 
@@ -35,6 +36,7 @@ function ProtectedLayout() {
           <Route path="/inbox" element={<InboxPage />} />
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/rsvp" element={<RsvpPage />} />
           <Route path="/agents" element={<Agents />} />
           <Route path="/conversations" element={<Conversations />} />
           <Route path="/conversations/:id" element={<Conversations />} />

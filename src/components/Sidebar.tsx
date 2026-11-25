@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Inbox, CheckSquare, Bot, MessageSquare, Key, Settings, Building2, LogOut } from 'lucide-react'
+import { LayoutDashboard, Inbox, CheckSquare, Bot, MessageSquare, Key, Settings, Building2, LogOut, PartyPopper } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/inbox', label: 'Inbox', icon: Inbox },
   { to: '/tasks', label: 'Tasks', icon: CheckSquare },
+  { to: '/rsvp', label: 'Christmas RSVP', icon: PartyPopper },
   { to: '/agents', label: 'Agents', icon: Bot },
   { to: '/conversations', label: 'Conversations', icon: MessageSquare },
   { to: '/clients', label: 'Clients', icon: Building2 },
