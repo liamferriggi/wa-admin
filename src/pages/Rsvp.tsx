@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { cancelRsvpBooking, downloadRsvpCsv, getRsvp, removeRsvpGuest, type RsvpData } from '../api'
+import { cancelRsvpBooking, downloadRsvpCsv, getRsvp, removeRsvpGuest, type RsvpData, type RsvpGuest } from '../api'
 
 export default function RsvpPage() {
   const [data, setData] = useState<RsvpData | null>(null)
@@ -19,6 +19,9 @@ export default function RsvpPage() {
         || b.guests.some((g) => g.name.toLowerCase().includes(term) || g.mobile.replace(/\D/g, '').includes(term.replace(/\D/g, '') || '~')))
   }, [data, q, showCancelled])
 
+  if (error?.includes('rsvp_restricted')) {
+    return <div className="card empty-state">The Christmas Party guest list is private. Only Liam and Marina can see it.</div>
+  }
   if (error) return <div className="error-banner">{error}</div>
   if (!data) return <div className="loading">Loading…</div>
 
@@ -76,13 +79,14 @@ export default function RsvpPage() {
           </div>
           <div className="table-wrapper" style={{ marginTop: 8 }}>
             <table>
-              <thead><tr><th>#</th><th>Full name</th><th>Mobile</th><th /></tr></thead>
+              <thead><tr><th>#</th><th>Full name</th><th>Mobile</th>{data.bookingSync && <th>Entry code</th>}<th /></tr></thead>
               <tbody>
                 {b.guests.map((g, i) => (
                   <tr key={g.id}>
                     <td>{i + 1}</td>
                     <td>{g.name}</td>
                     <td style={{ fontFamily: 'monospace' }}>{g.mobile || '—'}</td>
+                    {data.bookingSync && <td><CodeCell g={g} /></td>}
                     <td style={{ textAlign: 'right' }}>
                       <button className="btn" onClick={() => { if (confirm(`Remove ${g.name}?`)) removeRsvpGuest(g.id).then(load) }}>Remove</button>
                     </td>
@@ -95,6 +99,16 @@ export default function RsvpPage() {
       ))}
     </div>
   )
+}
+
+// Where the guest's entrance code is: waiting for the booking app, issued, or on their WhatsApp.
+function CodeCell({ g }: { g: RsvpGuest }) {
+  if (g.sync_status === 'failed') return <span style={{ color: '#b91c1c' }} title={g.sync_error ?? ''}>Booking failed</span>
+  if (!g.entry_code) return <span style={{ color: 'var(--text-muted)' }} title={g.sync_error ?? ''}>Waiting for booking app…</span>
+  const sent = g.code_sent_at
+    ? (g.code_via === 'booker' ? 'sent to booker' : 'sent on WhatsApp')
+    : 'not sent yet'
+  return <span><strong style={{ fontFamily: 'monospace' }}>{g.entry_code}</strong> <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>· {sent}</span></span>
 }
 
 function Stat({ label, value }: { label: string; value: number }) {

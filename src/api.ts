@@ -163,9 +163,9 @@ export const deleteApiKey = (id: string) =>
   request<void>(`/api/api-keys/${id}`, { method: 'DELETE' })
 
 // Christmas Party RSVP
-export type RsvpGuest = { id: string; booking_id: string; name: string; mobile: string; created_at: string }
+export type RsvpGuest = { id: string; booking_id: string; name: string; mobile: string; created_at: string; entry_code?: string | null; sync_status?: string; sync_error?: string | null; code_sent_at?: string | null; code_via?: string | null }
 export type RsvpBooking = { id: string; sender: string; company: string; status: string; created_at: string; updated_at: string; guests: RsvpGuest[] }
-export type RsvpData = { event: string; open: boolean; template: string; totals: { bookings: number; guests: number; cancelled: number }; bookings: RsvpBooking[] }
+export type RsvpData = { event: string; open: boolean; bookingSync?: boolean; template: string; totals: { bookings: number; guests: number; cancelled: number }; bookings: RsvpBooking[] }
 export const getRsvp = () => request<RsvpData>('/api/rsvp')
 export const removeRsvpGuest = (id: string) => request<void>(`/api/rsvp/guests/${id}`, { method: 'DELETE' })
 export const cancelRsvpBooking = (id: string) => request<void>(`/api/rsvp/bookings/${id}/cancel`, { method: 'POST' })
